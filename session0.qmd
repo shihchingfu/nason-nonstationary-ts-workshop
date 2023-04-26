@@ -1,0 +1,35 @@
+---
+title: "Session 0"
+format: html
+---
+
+```{r}
+library("locits")
+library("zoo")
+library("forecast")
+library("tibble")
+library("lpacf")
+library("forecastLSW")
+library("BootWPTOS")
+```
+
+```{r}
+print(load(url("https://www.ma.imperial.ac.uk/~gnason/Session2.RData")))
+print(load(url("https://www.ma.imperial.ac.uk/~gnason/Session4.RData")))
+```
+
+```{r}
+plot(boris.well.zoo, xlab="Date", ylab="Boris Johnson Approval Rating %")
+```
+
+```{r}
+plot.ts(oxford.rain)
+```
+
+```{r}
+plot.ts(BabyECG)
+```
+
+```{r}
+plot.ts(Earthquake, ylab="Earthquake", xlab="Time")
+```
