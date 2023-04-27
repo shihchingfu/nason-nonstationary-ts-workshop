@@ -1,0 +1,212 @@
+---
+title: "Session 2"
+format: html
+---
+
+IDEA: Bayesian power spectrum estimation
+
+# Introduction
+
+```{r}
+library("locits")
+library("zoo")
+library("forecast")
+library("tibble")
+library("lpacf")
+library("forecastLSW")
+library("BootWPTOS")
+```
+
+```{r}
+print(load(url("https://www.ma.imperial.ac.uk/~gnason/Session2.RData")))
+```
+
+## Simulated Stationary Time Series
+
+```{r}
+set.seed(423)
+
+sim1 <- arima.sim(n=512, model=list(ma=c(0.9, -0.7)))
+plot.ts(sim1)
+```
+
+```{r}
+acf(sim1)
+```
+
+## Boris Johnson approval ratings
+
+```{r}
+plot(boris.well.zoo, xlab="Date", ylab="Boris Johnson Approval Rating %")
+```
+
+```{r}
+par(mfrow=c(1,2), pty="s")
+acf(coredata(boris.well.zoo), main = "ACF: Boris Well %")
+pacf(coredata(boris.well.zoo), main = "PACF: Boris Well %")
+```
+
+## Oxford Rain Time Series
+
+```{r}
+plot.ts(oxford.rain)
+```
+
+```{r}
+par(mfrow=c(1,2), pty="s")
+acf(oxford.rain, main = "ACF: Oxford Rain")
+pacf(oxford.rain, main = "PACF: Oxford Rain")
+```
+
+```{r}
+stats::spectrum(oxford.rain, spans=c(17,15,13,11))
+```
+
+The units are in "oscillations per year", i.e., one up-and-down cycle, so the peak at 1 is a period of 1 year or 12 months.
+
+```{r}
+stats::spectrum(oxford.rain, spans=c(30))
+```
+
+## BabyECG Series
+
+```{r}
+plot.ts(BabyECG)
+```
+
+```{r}
+par(mfrow=c(1,2), pty="s")
+acf(BabyECG[1:256], main = "a.")
+acf(BabyECG[1001:1256], main = "b.")
+```
+
+## Haar concat simulation
+
+```{r}
+set.seed(345)
+x <- HaarConcat()
+plot.ts(x)
+```
+
+```{r}
+par(mfrow=c(1,2), pty="s")
+acf(x[1:128])
+acf(x[358:512])
+```
+
+```{r}
+hwtos2(x)
+```
+
+## Exercise
+
+```{r}
+hwtos2(x, filter.number=4)
+```
+
+```{r}
+plot(hwtos2(x))
+```
+
+
+## BabyECG test of stationarity
+
+```{r}
+plot(hwtos2(BabyECG))
+```
+
+
+```{r}
+print(hwtos2(BabyECG))
+```
+
+
+## Oxford Rain
+
+```{r}
+oxford.rain.extend <- c(rep(mean(oxford.rain), 20), oxford.rain)
+hwtos2(oxford.rain.extend)
+```
+
+
+# Wavelet Spectrum Estimation
+
+## Concatenated Haar Process
+
+```{r}
+set.seed(345)
+
+y <- HaarConcat()
+HC_bw <- AutoBestBW(y)
+cat("AutoBestBW is ", HC_bw, "\n")
+
+HC_S <- ewspec3(y, filter.number=1, family="DaubExPhase", binwidth=HC_bw)$S
+
+plot(HC_S)
+
+hc1 <- c(rep(0.5, 128), rep(0, 512-128))
+hc2 <- c(rep(0, 128), rep(0.5, 128), rep(0, 256))
+hc3 <- rev(hc2)
+hc4 <- rev(hc1)
+
+lines(1:512, 1+hc1, lwd=2, col=2)
+lines(1:512, 2+hc2, lwd=2, col=2)
+lines(1:512, 3+hc3, lwd=2, col=2)
+lines(1:512, 4+hc4, lwd=2, col=2)
+
+```
+
+
+```{r}
+HC_S <- ewspec3(y, filter.number=1, family="DaubExPhase", binwidth=100)$S
+
+plot(HC_S)
+
+hc1 <- c(rep(0.5, 128), rep(0, 512-128))
+hc2 <- c(rep(0, 128), rep(0.5, 128), rep(0, 256))
+hc3 <- rev(hc2)
+hc4 <- rev(hc1)
+
+lines(1:512, 1+hc1, lwd=2, col=2)
+lines(1:512, 2+hc2, lwd=2, col=2)
+lines(1:512, 3+hc3, lwd=2, col=2)
+lines(1:512, 4+hc4, lwd=2, col=2)
+
+```
+
+
+## Exercise
+
+```{r}
+#dat <- readRDS("34_ra208.154_dec-63.266_MAXIJ1348TraPDB_andersson.RDS")
+dat <- read.csv("Omi_Ceti.csv")
+
+ts <- dat$magnitude
+plot.ts(ts)
+```
+
+```{r}
+length(ts)
+```
+
+
+```{r}
+ts_trunc <- ts[1:2^12]
+
+hwtos2(ts_trunc)
+```
+
+```{r}
+plot(hwtos2(ts_trunc))
+```
+
+
+```{r}
+ts_bw <- AutoBestBW(ts_trunc)
+cat("AutoBestBW is ", ts_bw, "\n")
+
+ts_spectrum <- ewspec3(ts_trunc, filter.number=1, family="DaubExPhase", binwidth=ts_bw)$S
+
+plot(ts_spectrum)
+```
+
